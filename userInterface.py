@@ -1,63 +1,76 @@
 from time import sleep as wait
-from os import name, system
+from os import name as platformName, system
 import threading
-#from signal import signal, SIGTERM, SIGINT
 from getkey import getkey, keys
 
-class Shape:
-    def __init__(self, shape: list, position: tuple=(0, 0)):
-        self.posx, self.posy = position
-        self.shape = shape
-
-triangle = Shape([
-    "    **",
-    "    **",
-    "******",
-    "******"
-])
-
-class Resolution:
+class Vector2:
     def __init__(self, x: int, y: int):
         self.x = x
         self.y = y
 
+class Shape:
+    def __init__(self, shape: list, position: tuple=(0, 0)):
+        self.position = Vector2(*position)
+        self.shape = shape
+        self.width = len(shape[0])
+        self.height = len(shape)
+
+sample = Shape([
+    "########",
+    "#      #",
+    "#      #",
+    "########"
+])
+
+shapes = []
+
 class Window:
-    def __init__(self, resolution: tuple=(20, 10), corners: tuple=("┏", "┓", "┗", "┛"), top: str="━", sides: str="┃"):
-        x, y = resolution
-        self.resolution = Resolution(x, y)
+    def __init__(self, resolution: tuple=(20, 20), corners: tuple=("┏", "┓", "┗", "┛"), top: str="━", sides: str="┃"):
+        self.resolution = Vector2(*resolution)
         self.name = "┫TETRISPY┣"
         self.topLeft, self.topRight, self.bottomLeft, self.bottomRight = corners
         self.top = top
         self.sides = sides
 
-    def renderFrame(self):
-        print(f"{self.topLeft}{self.top*(int(self.resolution.x/2)-int(len(self.name)/2))}{self.name}{self.top*(int(self.resolution.x/2)-int(len(self.name)/2))}{self.topRight}")
+    def renderFrame(self, lines: list=[]):
+        lines.append(self.topLeft + self.top*(int(self.resolution.x/2)-int(len(self.name)/2)) + self.name + self.top*(int(self.resolution.x/2)-int(len(self.name)/2)) + self.topRight)
+        #for i in shapes:
+        rendery = 0
         for i in range(self.resolution.y):
-            if i >= triangle.posy and i < len(triangle.shape) + triangle.posy:
-                middle = " "*triangle.posx + triangle.shape[i] + " "*(self.resolution.x-len(triangle.shape[i])-triangle.posx)
+            if i >=  sample.position.y and i < sample.height+sample.position.y:
+                middle = " "*sample.position.x + sample.shape[rendery] + " "*(self.resolution.x-sample.width-sample.position.x)
+                rendery += 1
             else:
                 middle = " "*self.resolution.x
-            print(f"{self.sides}{middle}{self.sides}")
-        print(f"{self.bottomLeft}{self.top*self.resolution.x}{self.bottomRight}")
+            lines.append(self.sides + middle + self.sides)
+        lines.append(self.bottomLeft + self.top*self.resolution.x + self.bottomRight)
+        print("\n".join(lines))
 
-    def renderLoop(self, fps: int=2):
-        thisThread = threading.currentThread()
-        while not thisThread.shouldRender.is_set():#getattr(thisThread, "shouldRun", False):
-            print("Press \"q\" or \"CTRL+Z\" to exit.")
-            print(f"{' '*(self.resolution.x+2-len(f'Rendering at {fps}fps'))}Rendering at {fps}fps")
-            self.renderFrame()
+    def renderLoop(self, fps: int=4, debug: bool=False):
+        self.renderThread = threading.currentThread()
+        self.renderThread.shouldRender = threading.Event()
+        while not self.renderThread.shouldRender.is_set():
+            self.renderFrame(lines=[
+                "Press \"q\" or \"CTRL+Z\" to exit.",
+                f"{' '*(self.resolution.x+2-len(f'Rendering at {fps}fps'))}Rendering at {fps}fps"
+            ])
             wait((60/fps)/60)
-            system("cls" if name == "nt" else "clear")
+            if not debug:
+                system("cls" if platformName == "nt" else "clear")
         print("Exiting renderLoop")
     
-    def stopRenderThread(self, *args):
-        self.renderThread.shouldRender.set()
-        self.renderThread.join()
+    def stopRenderThread(self, *args) -> bool:
+        try:
+            self.renderThread.shouldRender.set()
+            self.renderThread.join()
+        except NameError:
+            return False
+        else:
+            return True
 
-    def run(self, fps: int=2):
+    def run(self, fps: int=4, debug: bool=False):
         #Create threading for renderLoop
-        self.renderThread = threading.Thread(target=self.renderLoop, name="windowThread", kwargs={"fps": fps})
-        self.renderThread.shouldRender = threading.Event()
+        threading.Thread(target=self.renderLoop, name="windowThread", kwargs={"fps": fps, "debug": debug})
 
         #Start thread
         self.renderThread.start()
@@ -66,22 +79,22 @@ class Window:
         while self.renderThread.is_alive():
             try:
                 key = getkey()
-            except KeyboardInterrupt as e:
+            except KeyboardInterrupt:
                 self.stopRenderThread()
             else:
                 if key == "q":
                     self.stopRenderThread()
                 elif key == keys.UP:
-                    print("UP")
-                    triangle.posy += 1
+                    if sample.position.y > 0:
+                        sample.position.y -= 1
                 elif key == keys.DOWN:
-                    print("DOWN")
-                    triangle.posy -= 1
+                    if sample.position.y + sample.height < self.resolution.y:
+                        sample.position.y += 1
                 elif key == keys.LEFT:
-                    print("LEFT")
-                    triangle.posx -= 1
+                    if sample.position.x > 0:
+                        sample.position.x -= 1
                 elif key == keys.RIGHT:
-                    print("RIGHT")
-                    triangle.posx += 1
+                    if sample.position.x + sample.width < self.resolution.x:
+                        sample.position.x += 1
 
         print("Exiting Main")
