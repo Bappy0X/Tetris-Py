@@ -8,22 +8,6 @@ class Vector2:
         self.x = x
         self.y = y
 
-class Shape:
-    def __init__(self, shape: list, position: tuple=(0, 0)):
-        self.position = Vector2(*position)
-        self.shape = shape
-        self.width = len(shape[0])
-        self.height = len(shape)
-
-sample = Shape([
-    "########",
-    "#      #",
-    "#      #",
-    "########"
-])
-
-shapes = []
-
 class Window:
     def __init__(self, resolution: tuple=(20, 20), corners: tuple=("┏", "┓", "┗", "┛"), top: str="━", sides: str="┃"):
         self.resolution = Vector2(*resolution)
@@ -34,7 +18,6 @@ class Window:
 
     def renderFrame(self, lines: list=[]):
         lines.append(self.topLeft + self.top*(int(self.resolution.x/2)-int(len(self.name)/2)) + self.name + self.top*(int(self.resolution.x/2)-int(len(self.name)/2)) + self.topRight)
-        #for i in shapes:
         rendery = 0
         for i in range(self.resolution.y):
             if i >=  sample.position.y and i < sample.height+sample.position.y:
@@ -57,7 +40,7 @@ class Window:
             wait((60/fps)/60)
             if not debug:
                 system("cls" if platformName == "nt" else "clear")
-        print("Exiting renderLoop")
+        print("Exiting renderThread")
     
     def stopRenderThread(self, *args) -> bool:
         try:
@@ -69,11 +52,9 @@ class Window:
             return True
 
     def run(self, fps: int=4, debug: bool=False):
-        #Create threading for renderLoop
-        threading.Thread(target=self.renderLoop, name="windowThread", kwargs={"fps": fps, "debug": debug})
-
-        #Start thread
-        self.renderThread.start()
+        #Create threading for renderLoop and start it
+        renderThread = threading.Thread(target=self.renderLoop, name="windowThread", kwargs={"fps": fps, "debug": debug})
+        renderThread.start()
 
         #While loop for key presses
         while self.renderThread.is_alive():
@@ -85,16 +66,42 @@ class Window:
                 if key == "q":
                     self.stopRenderThread()
                 elif key == keys.UP:
-                    if sample.position.y > 0:
-                        sample.position.y -= 1
+                    sample.moveUp(window=self)
                 elif key == keys.DOWN:
-                    if sample.position.y + sample.height < self.resolution.y:
-                        sample.position.y += 1
+                    sample.moveDown(window=self)
                 elif key == keys.LEFT:
-                    if sample.position.x > 0:
-                        sample.position.x -= 1
+                    sample.moveLeft(window=self)
                 elif key == keys.RIGHT:
-                    if sample.position.x + sample.width < self.resolution.x:
-                        sample.position.x += 1
+                    sample.moveRight(window=self)
 
         print("Exiting Main")
+
+class Shape:
+    def __init__(self, shape: list, position: tuple=(0, 0)):
+        self.position = Vector2(*position)
+        self.shape = shape
+        self.width = len(shape[0])
+        self.height = len(shape)
+
+    def moveUp(self, window: Window, amount: int=1):
+        if self.position.y > 0:
+            self.position.y -= 1
+
+    def moveDown(self, window: Window, amount: int=1):
+        if self.position.y + self.height < window.resolution.y:
+            self.position.y += 1
+
+    def moveLeft(self, window: Window, amount: int=1):
+        if self.position.x > 0:
+            self.position.x -= 1
+
+    def moveRight(self, window: Window, amount: int=1):
+        if self.position.x + self.width < window.resolution.x:
+            self.position.x += 1
+
+sample = Shape([
+    "########",
+    "#      #",
+    "#      #",
+    "########"
+])

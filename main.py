@@ -3,8 +3,7 @@ from userInterface import Window
 
 if __name__ == "__main__":
     #Handle user
-    player = User()
-    player.initFromDB("Josh2")
+    player = User().initFromDB("Josh2")
     if player.isInitialised():
         print(player)
         print(dict(player))
@@ -14,5 +13,5 @@ if __name__ == "__main__":
     #Create window
     win = Window(resolution=(60,20))
     win.renderFrame()
-    win.renderLoop()
-    #win.run()#fps=60)
+    #win.renderLoop()
+    win.run(debug=False, fps=30)
