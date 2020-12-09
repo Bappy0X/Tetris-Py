@@ -1,5 +1,5 @@
 from users import User
-from userInterface import Window
+from userInterface import Window, Shape
 
 if __name__ == "__main__":
     #Handle User Initialisation
@@ -12,6 +12,15 @@ if __name__ == "__main__":
     
     #Create window
     win = Window(resolution=(60,20))
+
+    sample = Shape([
+        "########",
+        "#      #",
+        "#      #",
+        "########"
+    ])
+    win.addShape(sample)
+
     win.renderFrame()
     #win.renderLoop()
-    win.run(debug=False, fps=30)
+    win.run(debug=False, fps=10)

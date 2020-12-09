@@ -9,19 +9,49 @@ class Vector2:
         self.y = y
 
 class Window:
+    pass
+
+class Shape:
+    def __init__(self, shape: list, position: tuple=(0, 0)):
+        self.position = Vector2(*position)
+        self.shape = shape
+        self.width = len(shape[0])
+        self.height = len(shape)
+
+    #Movement functions
+    def moveUp(self, window: Window, amount: int=1):
+        if self.position.y > 0:
+            self.position.y -= 1
+    def moveDown(self, window: Window, amount: int=1):
+        if self.position.y + self.height < window.resolution.y:
+            self.position.y += 1
+    def moveLeft(self, window: Window, amount: int=1):
+        if self.position.x > 0:
+            self.position.x -= 1
+    def moveRight(self, window: Window, amount: int=1):
+        if self.position.x + self.width < window.resolution.x:
+            self.position.x += 1
+
+class Window:
     def __init__(self, resolution: tuple=(20, 20), corners: tuple=("┏", "┓", "┗", "┛"), top: str="━", sides: str="┃"):
         self.resolution = Vector2(*resolution)
         self.name = "┫TETRISPY┣"
         self.topLeft, self.topRight, self.bottomLeft, self.bottomRight = corners
         self.top = top
         self.sides = sides
+        self.shapes = []
+        self.currentlySelected = None
+
+    def addShape(self, shapeToAdd: Shape):
+        self.shapes.append(shapeToAdd)
+        self.currentlySelected = self.shapes[-1]
 
     def renderFrame(self, lines: list=[]):
         lines.append(self.topLeft + self.top*(int(self.resolution.x/2)-int(len(self.name)/2)) + self.name + self.top*(int(self.resolution.x/2)-int(len(self.name)/2)) + self.topRight)
         rendery = 0
         for i in range(self.resolution.y):
-            if i >=  sample.position.y and i < sample.height+sample.position.y:
-                middle = " "*sample.position.x + sample.shape[rendery] + " "*(self.resolution.x-sample.width-sample.position.x)
+            if i >=  self.shapes[0].position.y and i < self.shapes[0].height+self.shapes[0].position.y:
+                middle = " "*self.shapes[0].position.x + self.shapes[0].shape[rendery] + " "*(self.resolution.x-self.shapes[0].width-self.shapes[0].position.x)
                 rendery += 1
             else:
                 middle = " "*self.resolution.x
@@ -66,42 +96,12 @@ class Window:
                 if key == "q":
                     self.stopRenderThread()
                 elif key == keys.UP:
-                    sample.moveUp(window=self)
+                    self.currentlySelected.moveUp(window=self)
                 elif key == keys.DOWN:
-                    sample.moveDown(window=self)
+                    self.currentlySelected.moveDown(window=self)
                 elif key == keys.LEFT:
-                    sample.moveLeft(window=self)
+                    self.currentlySelected.moveLeft(window=self)
                 elif key == keys.RIGHT:
-                    sample.moveRight(window=self)
+                    self.currentlySelected.moveRight(window=self)
 
         print("Exiting Main")
-
-class Shape:
-    def __init__(self, shape: list, position: tuple=(0, 0)):
-        self.position = Vector2(*position)
-        self.shape = shape
-        self.width = len(shape[0])
-        self.height = len(shape)
-
-    def moveUp(self, window: Window, amount: int=1):
-        if self.position.y > 0:
-            self.position.y -= 1
-
-    def moveDown(self, window: Window, amount: int=1):
-        if self.position.y + self.height < window.resolution.y:
-            self.position.y += 1
-
-    def moveLeft(self, window: Window, amount: int=1):
-        if self.position.x > 0:
-            self.position.x -= 1
-
-    def moveRight(self, window: Window, amount: int=1):
-        if self.position.x + self.width < window.resolution.x:
-            self.position.x += 1
-
-sample = Shape([
-    "########",
-    "#      #",
-    "#      #",
-    "########"
-])

@@ -1,1 +1,1 @@
-https://github.com/li-rupert/getkey
+-e git@github.com:li-rupert/getkey.git
